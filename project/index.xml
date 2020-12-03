@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Projects on My Website</title>
+    <link>/project/</link>
+    <description>Recent content in Projects on My Website</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Fri, 11 Dec 2020 00:00:00 +0000</lastBuildDate><atom:link href="/project/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Project 1: Exploratory Data Analysis</title>
+      <link>/project/project1/</link>
+      <pubDate>Fri, 11 Dec 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project1/</guid>
+      <description>Introduction Dataset 1 contains the weighted average of seconds added per point out of matches from 1991-2015 for 218 tennis players. I acquired this dataset from the package fivethirtyeight. Dataset 2 contains the current top 100 tennis players from the ATP ranking and their statistics including rank number, country and points. I acquired this dataset from https://www.ultimatetennisstatistics.com/rankingsTable. I have been playing tennis for 10 years and keep up with results from Grand Slams, so I was interested in finding datasets about tennis statistics.</description>
+    </item>
+    
+    <item>
+      <title>Project 2</title>
+      <link>/project/project2/</link>
+      <pubDate>Fri, 11 Dec 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project2/</guid>
+      <description>Data library(readxl) tenmile &amp;lt;- read_excel(&amp;quot;tenmile.xlsx&amp;quot;) tenmile &amp;lt;- tenmile %&amp;gt;% na.omit() tenmile &amp;lt;- tenmile %&amp;gt;% filter(state==&amp;quot;TX&amp;quot;|state==&amp;quot;MA&amp;quot;|state==&amp;quot;WV&amp;quot;|state==&amp;quot;FL&amp;quot;) tenmile &amp;lt;- tenmile %&amp;gt;% mutate(sexF=ifelse(sex==&amp;quot;F&amp;quot;,1,0)) tenmile %&amp;gt;% filter(state==&amp;quot;FL&amp;quot;) ## # A tibble: 20 x 6 ## state time net age sex sexF ## &amp;lt;chr&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;chr&amp;gt; &amp;lt;dbl&amp;gt; ## 1 FL 4867 4694 23 M 0 ## 2 FL 4724 4644 24 M 0 ## 3 FL 7204 7057 32 M 0 ## 4 FL 4077 4061 34 M 0 ## 5 FL 4714 4473 39 M 0 ## 6 FL 5578 5266 41 M 0 ## 7 FL 4115 4085 42 M 0 ## 8 FL 4533 4512 53 M 0 ## 9 FL 6851 6549 54 M 0 ## 10 FL 8592 8592 57 M 0 ## 11 FL 8643 8311 58 M 0 ## 12 FL 5869 5801 59 M 0 ## 13 FL 6239 5840 75 M 0 ## 14 FL 4483 4302 19 F 1 ## 15 FL 6922 6601 29 F 1 ## 16 FL 4666 4572 35 F 1 ## 17 FL 4261 4233 39 F 1 ## 18 FL 5577 5266 41 F 1 ## 19 FL 5045 5045 44 F 1 ## 20 FL 8593 8593 56 F 1 tenmile is a dataset of statistics from the 2005 Cherry Blossom 10 Mile Run in Washington, D.</description>
+    </item>
+    
+  </channel>
+</rss>

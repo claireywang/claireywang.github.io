@@ -1,0 +1,28 @@
+---
+title: Test Post
+author: ''
+date: '2020-12-03'
+slug: test-post
+categories: []
+tags: []
+description: ''
+---
+<center>
+![](/post/2020-12-03-test-post_files/pere and fish.jpeg){width=110%}
+</center>
+# Heading of my post!
+
+Content of my post!
+
+## Subheading
+
+More content
+
+```{R}
+hist(quakes$mag)
+quakes<-quakes
+```
+
+```{python}
+r.quakes.mag.mean()
+```

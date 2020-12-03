@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Claire Wang" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>Project 2</title>
+    <meta name="generator" content="Hugo 0.79.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project2/">Project 2</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         December 11, 2020 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<hr />
+<div id="data" class="section level3">
+<h3>Data</h3>
+<pre class="r"><code>library(readxl)
+tenmile &lt;- read_excel(&quot;tenmile.xlsx&quot;)
+tenmile &lt;- tenmile %&gt;% na.omit()
+tenmile &lt;- tenmile %&gt;% filter(state==&quot;TX&quot;|state==&quot;MA&quot;|state==&quot;WV&quot;|state==&quot;FL&quot;)
+tenmile &lt;- tenmile %&gt;% mutate(sexF=ifelse(sex==&quot;F&quot;,1,0))
+tenmile %&gt;% filter(state==&quot;FL&quot;)</code></pre>
+<pre><code>## # A tibble: 20 x 6
+##    state  time   net   age sex    sexF
+##    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt; &lt;dbl&gt;
+##  1 FL     4867  4694    23 M         0
+##  2 FL     4724  4644    24 M         0
+##  3 FL     7204  7057    32 M         0
+##  4 FL     4077  4061    34 M         0
+##  5 FL     4714  4473    39 M         0
+##  6 FL     5578  5266    41 M         0
+##  7 FL     4115  4085    42 M         0
+##  8 FL     4533  4512    53 M         0
+##  9 FL     6851  6549    54 M         0
+## 10 FL     8592  8592    57 M         0
+## 11 FL     8643  8311    58 M         0
+## 12 FL     5869  5801    59 M         0
+## 13 FL     6239  5840    75 M         0
+## 14 FL     4483  4302    19 F         1
+## 15 FL     6922  6601    29 F         1
+## 16 FL     4666  4572    35 F         1
+## 17 FL     4261  4233    39 F         1
+## 18 FL     5577  5266    41 F         1
+## 19 FL     5045  5045    44 F         1
+## 20 FL     8593  8593    56 F         1</code></pre>
+<p><code>tenmile</code> is a dataset of statistics from the 2005 Cherry Blossom 10 Mile Run in Washington, D.C. After editing <code>tenmile</code> to fit the project criteria, it has 6 variables: state, time, net, age, sex, and sexF, with each observation representing a runner. <code>state</code> is the state the runner resides in, <code>time</code> is the time in seconds from starting gun to finish line, <code>net</code> is the time in seconds from starting line to finish line, <code>age</code> is the age of the runner in years, <code>sex</code> is the sex of the runner, and <code>sexF</code> is a binomial representation of <code>sex</code> where M=0 and F=1. There are 130 observations representing 4 states.</p>
+</div>
+<div id="manova" class="section level3">
+<h3>MANOVA</h3>
+<pre class="r"><code>#MANOVA
+man1&lt;-manova(cbind(time,net,age,sexF)~state, data=tenmile)
+summary(man1)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## state 3 0.21766 2.4447 12 375 0.004487 **
+## Residuals 126
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>#univariate ANOVAs
+summary.aov(man1)</code></pre>
+<pre><code>## Response time :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## state 3 1629436 543145 0.3484 0.7904
+## Residuals 126 196451291 1559137
+##
+## Response net :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## state 3 907754 302585 0.2188 0.8832
+## Residuals 126 174241243 1382867
+##
+## Response age :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## state 3 3185.7 1061.90 6.5661 0.0003683 ***
+## Residuals 126 20377.4 161.73
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response sexF :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## state 3 3.3066 1.10219 4.7772 0.00346 **
+## Residuals 126 29.0704 0.23072
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>#post-hoc t-tests
+pairwise.t.test(tenmile$age,tenmile$state, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  tenmile$age and tenmile$state 
+## 
+##    FL    MA      TX   
+## MA 0.021 -       -    
+## TX 0.287 0.255   -    
+## WV 0.158 4.4e-05 0.011
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(tenmile$sexF,tenmile$state, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  tenmile$sexF and tenmile$state 
+## 
+##    FL     MA     TX    
+## MA 0.0079 -      -     
+## TX 0.3043 0.1156 -     
+## WV 0.7564 0.0016 0.1652
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>#adjusted alpha
+.05/17</code></pre>
+<pre><code>## [1] 0.002941176</code></pre>
+<pre class="r"><code>#type I error
+1-(.95^17)</code></pre>
+<pre><code>## [1] 0.5818797</code></pre>
+<pre class="r"><code>#testing assumptions
+library(rstatix)
+group &lt;- tenmile$state 
+DVs &lt;- tenmile %&gt;% select(time,net,age,sexF)
+
+#test multivariate normality for each group (null: assumption met)
+sapply(split(DVs,group), mshapiro_test)</code></pre>
+<pre><code>##           FL        MA        TX         WV        
+## statistic 0.8836305 0.9550574 0.9138701  0.8801879 
+## p.value   0.0205751 0.0219332 0.04282453 0.01009613</code></pre>
+<p>The MANOVA was significant (p=0.004487), so there is a mean difference across levels of the categorical variable in at least one numerical variable. After performing the univariate ANOVAs, <code>age</code> and <code>sexF</code> were shown to be the significant variables (p=0.0003683 and p=0.00346, respectively). Post-hoc t-tests were performed next, and an adjusted bonferroni alpha of .05/17=0.00294 was used to account for multiple comparisons. If unadjusted, the probability of at least one type I error would be 0.582. MA and WV differ significantly from each other in terms of age (p=4.4e-05) and sexF (p=0.0016). In total, 1 MANOVA, 2 ANOVAs, and 12 t-tests were conducted. There are many MANOVA assumptions including independent observations and random samples, multivariate normality, homogeneity of covariances, linear relationships among DVs, no extreme uni/multi-variate outliers, and no multicollinearity. The <code>tenmile</code> dataset did not meet the assumption for multivariate normality (p&lt;0.05), and because there are so many assumptions, it also likely did not meet all the other ones.</p>
+</div>
+<div id="permanova-randomization-test" class="section level3">
+<h3>PERMANOVA (randomization test)</h3>
+<p>Null hypothesis: For all four DVs (time, net, age, sex), means for each state are equal</p>
+<p>Alternative hypothesis: For at least one DV, at least one state mean is different</p>
+<pre class="r"><code>library(vegan)
+dists &lt;- tenmile %&gt;% select(time,net,age,sexF) %&gt;% dist()
+adonis(dists~state,data=tenmile)</code></pre>
+<pre><code>## 
+## Call:
+## adonis(formula = dists ~ state, data = tenmile) 
+## 
+## Permutation: free
+## Number of permutations: 999
+## 
+## Terms added sequentially (first to last)
+## 
+##            Df SumsOfSqs MeanSqs F.Model      R2 Pr(&gt;F)
+## state       3   2540379  846793 0.28781 0.00681  0.839
+## Residuals 126 370712941 2942166         0.99319       
+## Total     129 373253320                 1.00000</code></pre>
+<pre class="r"><code>#compute observed F
+SST &lt;- sum(dists^2)/130
+SSW &lt;- tenmile %&gt;% group_by(state) %&gt;% select(state,time,net,age,sexF) %&gt;% do(d=dist(.[-1],&quot;euclidean&quot;)) %&gt;% ungroup() %&gt;% summarize(sum(d[[1]]^2)/20 + sum(d[[2]]^2)/63 + sum(d[[3]]^2)/24 + sum(d[[4]]^2)/23) %&gt;% pull
+F_obs&lt;-((SST-SSW)/(4-1))/(SSW/(130-4))
+
+#compute null dist for F
+Fs&lt;-replicate(1000,{
+  new &lt;- tenmile %&gt;% mutate(state=sample(state)) 
+  SSW &lt;- new %&gt;% group_by(state) %&gt;% select(state,time,net,age,sexF) %&gt;% do(d=dist(.[-1],&quot;euclidean&quot;)) %&gt;% ungroup() %&gt;%
+    summarize(sum(d[[1]]^2)/20 + sum(d[[2]]^2)/63 + sum(d[[3]]^2)/24 + sum(d[[4]]^2)/23) %&gt;% pull
+  ((SST-SSW)/3)/(SSW/126)
+})
+
+#p-value
+mean(Fs&gt;F_obs)</code></pre>
+<pre><code>## [1] 0.851</code></pre>
+<pre class="r"><code>#plot null dist and p-value
+hist(Fs,prob = T); abline(v=F_obs, col=&quot;red&quot;, add=T)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-3-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p>The result of the PERMANOVA for numeric variables in <code>tenmile</code> is not significant using the adonis function (p=0.821) or calculating by hand (p=0.838). This means we fail to reject the null hypothesis and the mean differences across all state groups are equal in terms of the four numeric variables (time, net, age, sex).</p>
+</div>
+<div id="linear-regression-model" class="section level3">
+<h3>Linear Regression Model</h3>
+<pre class="r"><code>#mean center variables
+tenmile$net_c &lt;- tenmile$net - mean(tenmile$net,na.rm=T)
+tenmile$age_c &lt;- tenmile$age - mean(tenmile$age,na.rm=T)
+
+fit &lt;- lm(net~age_c*state,data = tenmile)
+summary(fit)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = net ~ age_c * state, data = tenmile)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -2323.3 -734.8 -115.9 718.4 2779.7
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 5444.946 256.371 21.239 &lt; 2e-16 ***
+## age_c 51.857 17.753 2.921 0.00416 **
+## stateMA 425.106 295.995 1.436 0.15351
+## stateTX 129.708 342.812 0.378 0.70582
+## stateWV -155.857 379.510 -0.411 0.68203
+## age_c:stateMA -30.028 21.102 -1.423 0.15729
+## age_c:stateTX -48.659 27.422 -1.774 0.07848 .
+## age_c:stateWV -7.666 24.857 -0.308 0.75830
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 1113 on 122 degrees of freedom
+## Multiple R-squared: 0.1372, Adjusted R-squared: 0.08771
+## F-statistic: 2.772 on 7 and 122 DF, p-value: 0.01042</code></pre>
+<pre class="r"><code>ggplot(tenmile,aes(x=age_c, y=net, group = state)) + geom_point(aes(color=state)) + geom_smooth(method=&quot;lm&quot;,aes(color=state))</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#linearity
+resids &lt;- fit$residuals
+ggplot()+geom_histogram(aes(resids))</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-4-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>fitted &lt;- fit$fitted.values
+ggplot()+geom_point(aes(fitted,resids))</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-4-3.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#normality
+shapiro.test(resids)</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  resids
+## W = 0.98438, p-value = 0.1425</code></pre>
+<pre class="r"><code>#homoskedasticity
+library(lmtest)
+bptest(fit)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit
+## BP = 14.675, df = 7, p-value = 0.0404</code></pre>
+<pre class="r"><code>library(sandwich)
+coeftest(fit, vcov=vcovHC(fit))</code></pre>
+<pre><code>##
+## t test of coefficients:
+##
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 5444.9463 289.9466 18.7791 &lt; 2e-16 ***
+## age_c 51.8569 25.5257 2.0316 0.04437 *
+## stateMA 425.1063 325.1298 1.3075 0.19350
+## stateTX 129.7077 349.4639 0.3712 0.71116
+## stateWV -155.8572 492.1165 -0.3167 0.75201
+## age_c:stateMA -30.0279 28.3735 -1.0583 0.29201
+## age_c:stateTX -48.6586 32.8215 -1.4825 0.14078
+## age_c:stateWV -7.6659 34.1719 -0.2243 0.82287
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>SST &lt;- sum((tenmile$net-mean(tenmile$net))^2) #SS Total
+SSR &lt;- sum((fit$fitted.values-mean(tenmile$net))^2) #SS Regression
+SSR/SST</code></pre>
+<pre><code>## [1] 0.1372123</code></pre>
+<pre class="r"><code>summary(fit)$r.sq</code></pre>
+<pre><code>## [1] 0.1372123</code></pre>
+<p>The predicted net run time is 5444.95 seconds for FL residents of an average age. The estimated slope for age on net time for non-Floridians is 51.86. For people with average age, people from MA have an average/predicted net time that is 425.11 seconds longer than non-MA residents. For people with average age, people from TX have an average/predicted net time that is 129.71 seconds longer than non-TX residents. For people with average age, people from WV have an average/predicted net time that is 155.86 seconds shorter than non-WV residents. The slope of age on net time for MA residents is 30.03 smaller than for FL residents. The slope of age on net time for TX residents is 48.66 smaller than for FL residents. The slope of age on net time for WV residents is 7.67 smaller than for FL residents.</p>
+<p>The assumption of linearity was met when checked by plotting the residuals and residuals vs. fitted values. The assumption of homoskedasticity was not met when checked using the Breuch-Pagan test (p=0.0404). The assumption of normality was met when checked using the Shapiro-Wilk normality test (p=0.1425).</p>
+<p>After robust SEs, the significant coefficients were the same. The predicted net run time is 5444.95 seconds for FL residents of an average age (significant, p&lt;2e-16). The estimated slope for age on net time for non-Floridians is 51.86 (significant, p=0.04437). The model explains a proportion of 0.1372 of the variation in the outcome.</p>
+</div>
+<div id="bootstrapped-standard-errors" class="section level3">
+<h3>Bootstrapped Standard Errors</h3>
+<pre class="r"><code>samp_distn &lt;- replicate(5000, {
+  boot_dat &lt;- sample_frac(tenmile, replace=T) 
+  fit &lt;- lm(net~age_c*state,data=boot_dat) 
+  coef(fit)
+}) 
+samp_distn %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd) </code></pre>
+<pre><code>## (Intercept) age_c stateMA stateTX stateWV age_c:stateMA
+age_c:stateTX age_c:stateWV
+## 1 285.3576 24.20826 315.8341 339.508 476.7732 27.19016
+30.51728 33.52124</code></pre>
+<pre class="r"><code>samp_distn %&gt;% t %&gt;% as.data.frame %&gt;% pivot_longer(1:2) %&gt;% group_by(name) %&gt;%
+summarize(lower=quantile(value,.025), upper=quantile(value,.975))</code></pre>
+<pre><code>## # A tibble: 2 x 3
+##   name         lower upper
+##   &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt;
+## 1 (Intercept) 4887.  6000.
+## 2 age_c         12.7  108.</code></pre>
+<p>Comparing the significant p-values of the original SEs and robust SEs, the significant intercept p-value is the same and the p-value for <code>age_c</code> is smaller in the original SEs (0.00416&lt;0.04437). All non-significant p-values are smaller in the original SEs compared to the robust SEs.</p>
+<p>The standard errors are smallest in the original SEs, greater in the bootstrapped SEs, and greatest in the robust SEs. For example, the standard error for <code>age_c</code> is 17.753, 23.723, and 25.5257 in the original SEs, bootstrapped SEs, and robust SEs, respectively.</p>
+</div>
+<div id="logistic-regression-model-single-predictor" class="section level3">
+<h3>Logistic Regression Model (single predictor)</h3>
+<pre class="r"><code>fit1 &lt;- glm(sexF~state+net_c, data=tenmile, family=&quot;binomial&quot;)
+summary(fit1)</code></pre>
+<pre><code>##
+## Call:
+## glm(formula = sexF ~ state + net_c, family = &quot;binomial&quot;,
+data = tenmile)
+##
+## Deviance Residuals:
+## Min 1Q Median 3Q Max
+## -1.9344 -1.0859 0.6775 0.9512 1.8313
+##
+## Coefficients:
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) -0.6257387 0.4870201 -1.285 0.1989
+## stateMA 1.3875285 0.5595515 2.480 0.0131 *
+## stateTX 0.6747137 0.6397116 1.055 0.2916
+## stateWV -0.2479185 0.6761557 -0.367 0.7139
+## net_c 0.0003794 0.0001664 2.280 0.0226 *
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## (Dispersion parameter for binomial family taken to be 1)
+##
+## Null deviance: 179.73 on 129 degrees of freedom
+## Residual deviance: 160.74 on 125 degrees of freedom
+## AIC: 170.74
+##
+## Number of Fisher Scoring iterations: 4</code></pre>
+<pre class="r"><code>#confusion matrix
+prob &lt;- predict(fit1, type = &quot;response&quot;)
+pred &lt;- ifelse(prob &gt; 0.5, 1, 0)
+table(truth=tenmile$sexF, prediction=pred) %&gt;% addmargins</code></pre>
+<pre><code>##      prediction
+## truth   0   1 Sum
+##   0    35  26  61
+##   1    18  51  69
+##   Sum  53  77 130</code></pre>
+<pre class="r"><code>(35+51)/130 #accuracy</code></pre>
+<pre><code>## [1] 0.6615385</code></pre>
+<pre class="r"><code>35/61 #sensitivity (TPR)</code></pre>
+<pre><code>## [1] 0.5737705</code></pre>
+<pre class="r"><code>51/69 #specificity (TNR)</code></pre>
+<pre><code>## [1] 0.7391304</code></pre>
+<pre class="r"><code>35/53 #precision (PPV)</code></pre>
+<pre><code>## [1] 0.6603774</code></pre>
+<pre class="r"><code>#density plot
+tenmile$logit &lt;- predict(fit1, type=&quot;link&quot;)
+tenmile %&gt;% ggplot() + geom_density(aes(logit,color=sexF,fill=sexF), alpha=.4) +
+  theme(legend.position=c(.15,.65))+geom_vline(xintercept=0)+xlab(&quot;logit (log-odds)&quot;) +
+  geom_rug(aes(logit,color=sexF))</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-6-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#ROC curve and AUC
+library(plotROC)
+ROCplot &lt;- ggplot(tenmile) + geom_roc(aes(d = sexF, m = prob), n.cuts = 0)
+ROCplot</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-6-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>calc_auc(ROCplot)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.7271323</code></pre>
+<p>-.3563 is the mean/predicted sex for FL residents with average net run time. For people with an average net run time, MA residents have an average/predicted sex that is .3197 greater than FL residents. For people with an average net run time, TX residents have an average/predicted sex that is .1543 greater than FL residents. For people with an average net run time, WV residents have an average/predicted sex that is 0.05076 lesser than FL residents. The estimated slope for net run time on sex for non-FL residents is 8.317e-5.</p>
+<p>The accuracy, proportion of correctly classified cases, is 0.6615385. The sensitivity, proportion of males correctly classified, is 0.5737705. The specificity, proportion of females correctly classified, is 0.7391304. The precision, proportion classified males who actually are, is 0.6603774. Overall, these statistics from the confusion matrix are all right because more than half of cases are correctly classified. The AUC (area under curve) of 0.728 is fair because this quantifies how well we are predicting overall using the model.</p>
+<p>The ROC curve looks like an exponential growth curve, which resembles the ideal &quot;Γ&quot; shaped ROC curve. The AUC (quantification of how well the model predicts the sex overall) is 0.728, which is fair.</p>
+</div>
+<div id="logistic-regression-model-all-predictors" class="section level3">
+<h3>Logistic Regression Model (all predictors)</h3>
+<pre class="r"><code>tenmile$time_c &lt;- tenmile$time - mean(tenmile$time,na.rm=T)
+fit2 &lt;- glm(sexF~state+time_c+net_c+age_c, data=tenmile)
+
+#classification diagnostics function
+class_diag&lt;-function(probs,truth){
+
+tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+acc=sum(diag(tab))/sum(tab)
+sens=tab[2,2]/colSums(tab)[2]
+spec=tab[1,1]/colSums(tab)[1]
+ppv=tab[2,2]/rowSums(tab)[2]
+
+if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) truth&lt;-as.numeric(truth)-1
+ord&lt;-order(probs, decreasing=TRUE)
+probs &lt;- probs[ord]; truth &lt;- truth[ord]
+
+TPR=cumsum(truth)/max(1,sum(truth)) 
+FPR=cumsum(!truth)/max(1,sum(!truth))
+
+dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+
+n &lt;- length(TPR)
+auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+data.frame(acc,sens,spec,ppv,auc)}
+probs &lt;- predict(fit2, type=&quot;response&quot;)
+class_diag(probs,tenmile$sexF)</code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.7076923 0.7826087 0.6229508 0.7012987 0.7752435</code></pre>
+<pre class="r"><code>#10-fold CV
+set.seed(123)
+k=10
+
+data1&lt;-tenmile[sample(nrow(tenmile)),] 
+folds&lt;-cut(seq(1:nrow(tenmile)),breaks=k,labels=F) 
+
+diags&lt;-NULL
+for(i in 1:k){          
+train&lt;-data1[folds!=i,] 
+test&lt;-data1[folds==i,]  
+
+truth&lt;-test$sexF
+
+fit&lt;- glm(sexF~state+time_c+net_c+age_c, data=train, family=&quot;binomial&quot;)
+probs&lt;- predict(fit, newdata=test, type=&quot;response&quot;)
+
+diags&lt;-rbind(diags, class_diag(probs,truth)) 
+}
+
+summarize_all(diags,mean) </code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.6769231 0.7746032 0.5988095 0.6920635 0.7471825</code></pre>
+<pre class="r"><code>#LASSO
+library(glmnet)
+y &lt;- as.matrix(tenmile$sexF) #grab response
+x &lt;- model.matrix(sexF~state+time_c+net_c+age_c,data=tenmile)[,-1] 
+x &lt;- scale(x)
+cv &lt;- cv.glmnet(x,y,family=&quot;binomial&quot;)
+lasso &lt;- glmnet(x,y,family=&quot;binomial&quot;,lambda=cv$lambda.1se)
+coef(lasso)</code></pre>
+<pre><code>## 7 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                     s0
+## (Intercept)  0.1263688
+## stateMA      0.1611511
+## stateTX      .        
+## stateWV      .        
+## time_c       0.1474729
+## net_c        .        
+## age_c       -0.2572618</code></pre>
+<pre class="r"><code>#10-fold CV only using LASSO variables
+set.seed(123)
+k=10
+
+data1&lt;-tenmile[sample(nrow(tenmile)),] 
+folds&lt;-cut(seq(1:nrow(tenmile)),breaks=k,labels=F) 
+
+diags&lt;-NULL
+for(i in 1:k){          
+train&lt;-data1[folds!=i,] 
+test&lt;-data1[folds==i,]  
+
+truth&lt;-test$sexF
+
+fit&lt;- glm(sexF~state+time_c+age_c, data=train, family=&quot;binomial&quot;)
+probs&lt;- predict(fit, newdata=test, type=&quot;response&quot;)
+
+diags&lt;-rbind(diags, class_diag(probs,truth)) 
+}
+
+summarize_all(diags,mean) </code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.6615385 0.7634921 0.5863095 0.6831746 0.7499603</code></pre>
+<p>The accuracy, sensitivity, specificity, precision, and AUC are 0.708, 0.783, 0.623, 0.701, and 0.775 (fair), respectively. All of these statistics are fair values, since they predict a good proportion of runners' sexes correctly.</p>
+<p>After performing 10-fold CV with the same model, the accuracy, sensitivity, specificity, precision, and AUC are 0.677, 0.775, 0.599, 0.692, and 0.747, respectively. The AUC is still fair, but is slightly smaller than the AUC in the in-sample classification diagnostics. All the in-sample metrics are slightly greater than the average out-of-sample classification diagnostics. The 10-fold CV has a worse performance, which means the model is overfitting.</p>
+<p>State of MA, time_c, and age_c are retained after performing LASSO. After performing 10-fold CV with LASSO variables, the accuracy, sensitivity, specificity, precision, and AUC are 0.662, 0.763, 0.586, 0.683, and 0.750, respectively. These three variables predict the sex better than using all variables in the first 10-fold CV (AUC=0.75&gt;0.747). However, the out-of-sample classification diagnostics are still worse than the in-sample classification diagnostics, which means the model was overfitting. The AUC calculated after performing 10-fold CV with LASSO variables is better than the AUC calculated from the logistic regression above that only uses the variables <code>state</code> and <code>net_c</code> as predictors.</p>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

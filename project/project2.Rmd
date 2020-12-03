@@ -1,0 +1,284 @@
+---
+title: "Project 2"
+author: "Claire Wang cyw272"
+date: '2020-12-11'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+```
+
+---
+
+### Data
+
+```{r}
+library(readxl)
+tenmile <- read_excel("tenmile.xlsx")
+tenmile <- tenmile %>% na.omit()
+tenmile <- tenmile %>% filter(state=="TX"|state=="MA"|state=="WV"|state=="FL")
+tenmile <- tenmile %>% mutate(sexF=ifelse(sex=="F",1,0))
+tenmile %>% filter(state=="FL")
+```
+
+`tenmile` is a dataset of statistics from the 2005 Cherry Blossom 10 Mile Run in Washington, D.C. After editing `tenmile` to fit the project criteria, it has 6 variables: state, time, net, age, sex, and sexF, with each observation representing a runner. `state` is the state the runner resides in, `time` is the time in seconds from starting gun to finish line, `net` is the time in seconds from starting line to finish line, `age` is the age of the runner in years, `sex` is the sex of the runner, and `sexF` is a binomial representation of `sex` where M=0 and F=1. There are 130 observations representing 4 states.
+
+### MANOVA
+
+```{r}
+#MANOVA
+man1<-manova(cbind(time,net,age,sexF)~state, data=tenmile)
+summary(man1)
+
+#univariate ANOVAs
+summary.aov(man1)
+
+#post-hoc t-tests
+pairwise.t.test(tenmile$age,tenmile$state, p.adj="none")
+pairwise.t.test(tenmile$sexF,tenmile$state, p.adj="none")
+
+#adjusted alpha
+.05/17
+
+#type I error
+1-(.95^17)
+
+#testing assumptions
+library(rstatix)
+group <- tenmile$state 
+DVs <- tenmile %>% select(time,net,age,sexF)
+
+#test multivariate normality for each group (null: assumption met)
+sapply(split(DVs,group), mshapiro_test)
+```
+
+The MANOVA was significant (p=0.004487), so there is a mean difference across levels of the categorical variable in at least one numerical variable. After performing the univariate ANOVAs, `age` and `sexF` were shown to be the significant variables (p=0.0003683 and p=0.00346, respectively). Post-hoc t-tests were performed next, and an adjusted bonferroni alpha of .05/17=0.00294 was used to account for multiple comparisons. If unadjusted, the probability of at least one type I error would be 0.582. MA and WV differ significantly from each other in terms of age (p=4.4e-05) and sexF (p=0.0016). In total, 1 MANOVA, 2 ANOVAs, and 12 t-tests were conducted. There are many MANOVA assumptions including independent observations and random samples, multivariate normality, homogeneity of covariances, linear relationships among DVs, no extreme uni/multi-variate outliers, and no multicollinearity. The `tenmile` dataset did not meet the assumption for multivariate normality (p<0.05), and because there are so many assumptions, it also likely did not meet all the other ones.
+
+### PERMANOVA (randomization test)
+
+Null hypothesis: For all four DVs (time, net, age, sex), means for each state are equal
+
+Alternative hypothesis: For at least one DV, at least one state mean is different
+
+```{r}
+library(vegan)
+dists <- tenmile %>% select(time,net,age,sexF) %>% dist()
+adonis(dists~state,data=tenmile)
+
+#compute observed F
+SST <- sum(dists^2)/130
+SSW <- tenmile %>% group_by(state) %>% select(state,time,net,age,sexF) %>% do(d=dist(.[-1],"euclidean")) %>% ungroup() %>% summarize(sum(d[[1]]^2)/20 + sum(d[[2]]^2)/63 + sum(d[[3]]^2)/24 + sum(d[[4]]^2)/23) %>% pull
+F_obs<-((SST-SSW)/(4-1))/(SSW/(130-4))
+
+#compute null dist for F
+Fs<-replicate(1000,{
+  new <- tenmile %>% mutate(state=sample(state)) 
+  SSW <- new %>% group_by(state) %>% select(state,time,net,age,sexF) %>% do(d=dist(.[-1],"euclidean")) %>% ungroup() %>%
+    summarize(sum(d[[1]]^2)/20 + sum(d[[2]]^2)/63 + sum(d[[3]]^2)/24 + sum(d[[4]]^2)/23) %>% pull
+  ((SST-SSW)/3)/(SSW/126)
+})
+
+#p-value
+mean(Fs>F_obs)
+
+#plot null dist and p-value
+hist(Fs,prob = T); abline(v=F_obs, col="red", add=T)
+```
+
+The result of the PERMANOVA for numeric variables in `tenmile` is not significant using the adonis function (p=0.821) or calculating by hand (p=0.838). This means we fail to reject the null hypothesis and the mean differences across all state groups are equal in terms of the four numeric variables (time, net, age, sex).
+
+### Linear Regression Model
+
+```{r}
+#mean center variables
+tenmile$net_c <- tenmile$net - mean(tenmile$net,na.rm=T)
+tenmile$age_c <- tenmile$age - mean(tenmile$age,na.rm=T)
+
+fit <- lm(net~age_c*state,data = tenmile)
+summary(fit)
+
+ggplot(tenmile,aes(x=age_c, y=net, group = state)) + geom_point(aes(color=state)) + geom_smooth(method="lm",aes(color=state))
+
+#linearity
+resids <- fit$residuals
+ggplot()+geom_histogram(aes(resids))
+fitted <- fit$fitted.values
+ggplot()+geom_point(aes(fitted,resids))
+#normality
+shapiro.test(resids)
+#homoskedasticity
+library(lmtest)
+bptest(fit)
+library(sandwich)
+coeftest(fit, vcov=vcovHC(fit))
+
+SST <- sum((tenmile$net-mean(tenmile$net))^2) #SS Total
+SSR <- sum((fit$fitted.values-mean(tenmile$net))^2) #SS Regression
+SSR/SST
+summary(fit)$r.sq
+```
+
+The predicted net run time is 5444.95 seconds for FL residents of an average age. The estimated slope for age on net time for non-Floridians is 51.86. For people with average age, people from MA have an average/predicted net time that is 425.11 seconds longer than non-MA residents. For people with average age, people from TX have an average/predicted net time that is 129.71 seconds longer than non-TX residents. For people with average age, people from WV have an average/predicted net time that is 155.86 seconds shorter than non-WV residents. The slope of age on net time for MA residents is 30.03 smaller than for FL residents. The slope of age on net time for TX residents is 48.66 smaller than for FL residents. The slope of age on net time for WV residents is 7.67 smaller than for FL residents.
+
+The assumption of linearity was met when checked by plotting the residuals and residuals vs. fitted values. The assumption of homoskedasticity was not met when checked using the Breuch-Pagan test (p=0.0404). The assumption of normality was met when checked using the Shapiro-Wilk normality test (p=0.1425). 
+
+After robust SEs, the significant coefficients were the same. The predicted net run time is 5444.95 seconds for FL residents of an average age (significant, p<2e-16). The estimated slope for age on net time for non-Floridians is 51.86 (significant, p=0.04437). The model explains a proportion of 0.1372 of the variation in the outcome.
+
+### Bootstrapped Standard Errors
+
+```{r}
+samp_distn <- replicate(5000, {
+  boot_dat <- sample_frac(tenmile, replace=T) 
+  fit <- lm(net~age_c*state,data=boot_dat) 
+  coef(fit)
+}) 
+samp_distn %>% t %>% as.data.frame %>% summarize_all(sd) 
+samp_distn %>% t %>% as.data.frame %>% pivot_longer(1:2) %>% group_by(name) %>%
+summarize(lower=quantile(value,.025), upper=quantile(value,.975))
+```
+
+Comparing the significant p-values of the original SEs and robust SEs, the significant intercept p-value is the same and the p-value for `age_c` is smaller in the original SEs (0.00416<0.04437). All non-significant p-values are smaller in the original SEs compared to the robust SEs.
+
+The standard errors are smallest in the original SEs, greater in the bootstrapped SEs, and greatest in the robust SEs. For example, the standard error for `age_c` is 17.753, 23.723, and 25.5257 in the original SEs, bootstrapped SEs, and robust SEs, respectively.
+
+### Logistic Regression Model (single predictor)
+
+```{r}
+fit1 <- glm(sexF~state+net_c, data=tenmile, family="binomial")
+summary(fit1)
+
+#confusion matrix
+prob <- predict(fit1, type = "response")
+pred <- ifelse(prob > 0.5, 1, 0)
+table(truth=tenmile$sexF, prediction=pred) %>% addmargins
+(35+51)/130 #accuracy
+35/61 #sensitivity (TPR)
+51/69 #specificity (TNR)
+35/53 #precision (PPV)
+
+#density plot
+tenmile$logit <- predict(fit1, type="link")
+tenmile %>% ggplot() + geom_density(aes(logit,color=sexF,fill=sexF), alpha=.4) +
+  theme(legend.position=c(.15,.65))+geom_vline(xintercept=0)+xlab("logit (log-odds)") +
+  geom_rug(aes(logit,color=sexF))
+
+#ROC curve and AUC
+library(plotROC)
+ROCplot <- ggplot(tenmile) + geom_roc(aes(d = sexF, m = prob), n.cuts = 0)
+ROCplot
+calc_auc(ROCplot)
+```
+
+-.3563 is the mean/predicted sex for FL residents with average net run time. For people with an average net run time, MA residents have an average/predicted sex that is .3197 greater than FL residents. For people with an average net run time, TX residents have an average/predicted sex that is .1543 greater than FL residents. For people with an average net run time, WV residents have an average/predicted sex that is 0.05076 lesser than FL residents. The estimated slope for net run time on sex for non-FL residents is 8.317e-5.
+
+The accuracy, proportion of correctly classified cases, is 0.6615385. The sensitivity, proportion of males correctly classified, is 0.5737705. The specificity, proportion of females correctly classified, is 0.7391304. The precision, proportion classified males who actually are, is 0.6603774. Overall, these statistics from the confusion matrix are all right because more than half of cases are correctly classified. The AUC (area under curve) of 0.728 is fair because this quantifies how well we are predicting overall using the model.
+
+The ROC curve looks like an exponential growth curve, which resembles the ideal "Γ" shaped ROC curve. The AUC (quantification of how well the model predicts the sex overall) is 0.728, which is fair.
+
+### Logistic Regression Model (all predictors)
+
+```{r}
+tenmile$time_c <- tenmile$time - mean(tenmile$time,na.rm=T)
+fit2 <- glm(sexF~state+time_c+net_c+age_c, data=tenmile)
+
+#classification diagnostics function
+class_diag<-function(probs,truth){
+
+tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+acc=sum(diag(tab))/sum(tab)
+sens=tab[2,2]/colSums(tab)[2]
+spec=tab[1,1]/colSums(tab)[1]
+ppv=tab[2,2]/rowSums(tab)[2]
+
+if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+ord<-order(probs, decreasing=TRUE)
+probs <- probs[ord]; truth <- truth[ord]
+
+TPR=cumsum(truth)/max(1,sum(truth)) 
+FPR=cumsum(!truth)/max(1,sum(!truth))
+
+dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+
+n <- length(TPR)
+auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+data.frame(acc,sens,spec,ppv,auc)}
+probs <- predict(fit2, type="response")
+class_diag(probs,tenmile$sexF)
+
+#10-fold CV
+set.seed(123)
+k=10
+
+data1<-tenmile[sample(nrow(tenmile)),] 
+folds<-cut(seq(1:nrow(tenmile)),breaks=k,labels=F) 
+
+diags<-NULL
+for(i in 1:k){          
+train<-data1[folds!=i,] 
+test<-data1[folds==i,]  
+
+truth<-test$sexF
+
+fit<- glm(sexF~state+time_c+net_c+age_c, data=train, family="binomial")
+probs<- predict(fit, newdata=test, type="response")
+
+diags<-rbind(diags, class_diag(probs,truth)) 
+}
+
+summarize_all(diags,mean) 
+
+#LASSO
+library(glmnet)
+y <- as.matrix(tenmile$sexF) #grab response
+x <- model.matrix(sexF~state+time_c+net_c+age_c,data=tenmile)[,-1] 
+x <- scale(x)
+cv <- cv.glmnet(x,y,family="binomial")
+lasso <- glmnet(x,y,family="binomial",lambda=cv$lambda.1se)
+coef(lasso)
+
+#10-fold CV only using LASSO variables
+set.seed(123)
+k=10
+
+data1<-tenmile[sample(nrow(tenmile)),] 
+folds<-cut(seq(1:nrow(tenmile)),breaks=k,labels=F) 
+
+diags<-NULL
+for(i in 1:k){          
+train<-data1[folds!=i,] 
+test<-data1[folds==i,]  
+
+truth<-test$sexF
+
+fit<- glm(sexF~state+time_c+age_c, data=train, family="binomial")
+probs<- predict(fit, newdata=test, type="response")
+
+diags<-rbind(diags, class_diag(probs,truth)) 
+}
+
+summarize_all(diags,mean) 
+```
+
+The accuracy, sensitivity, specificity, precision, and AUC are 0.708, 0.783, 0.623, 0.701, and 0.775 (fair), respectively. All of these statistics are fair values, since they predict a good proportion of runners' sexes correctly.
+
+After performing 10-fold CV with the same model, the accuracy, sensitivity, specificity, precision, and AUC are 0.677, 0.775, 0.599, 0.692, and 0.747, respectively. The AUC is still fair, but is slightly smaller than the AUC in the in-sample classification diagnostics. All the in-sample metrics are slightly greater than the average out-of-sample classification diagnostics. The 10-fold CV has a worse performance, which means the model is overfitting. 
+
+State of MA, time_c, and age_c are retained after performing LASSO. After performing 10-fold CV with LASSO variables, the accuracy, sensitivity, specificity, precision, and AUC are 0.662, 0.763, 0.586, 0.683, and 0.750, respectively. These three variables predict the sex better than using all variables in the first 10-fold CV (AUC=0.75>0.747). However, the out-of-sample classification diagnostics are still worse than the in-sample classification diagnostics, which means the model was overfitting. The AUC calculated after performing 10-fold CV with LASSO variables is better than the AUC calculated from the logistic regression above that only uses the variables `state` and `net_c` as predictors.

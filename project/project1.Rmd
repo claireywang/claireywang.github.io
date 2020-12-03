@@ -1,0 +1,124 @@
+---
+title: 'Project 1: Exploratory Data Analysis'
+author: "SDS348"
+date: '2020-12-11'
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  pdf_document:
+    toc: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+```
+
+---
+## Introduction
+
+##### Dataset 1 contains the weighted average of seconds added per point out of matches from 1991-2015 for 218 tennis players. I acquired this dataset from the package `fivethirtyeight`. Dataset 2 contains the current top 100 tennis players from the ATP ranking and their statistics including rank number, country and points. I acquired this dataset from https://www.ultimatetennisstatistics.com/rankingsTable. I have been playing tennis for 10 years and keep up with results from Grand Slams, so I was interested in finding datasets about tennis statistics. I do not expect there will be any associations with a player's rank/points and how long they play per point.
+
+## 1. Tidying: Rearranging Wide/Long
+
+##### For dataset 1, I used pivot_wider to make each player their own column. Then I used pivot_longer to change it back to the original format of one column for all players (this dataset was already tidy). To make dataset 2 tidy, I used pivot_longer to make a categorical variable "best" that contained "bestRank" or "bestPoints" and the corresponding values were under the variable "value".
+
+```{R}
+library(tidyverse)
+library(dplyr)
+# Dataset 1:
+library(fivethirtyeight)
+glimpse(tennis_players_time)
+pivot1 <- tennis_players_time %>% pivot_wider(names_from="player",values_from="sec_added")
+pivot1 %>% pivot_longer(1:218, names_to="player", values_to="sec_added")
+
+# Dataset 2:
+library(readxl)
+tennis_rankings <- read_excel("tennis_rankings.xlsx")
+glimpse(tennis_rankings)
+tennis_rankings <- tennis_rankings %>% pivot_longer(cols=c("bestRank","bestPoints"), names_to="best", values_to="value")
+```
+
+## 2. Joining the datasets
+
+##### I used left_join to join the two datasets. tennis_players_time had 218 observations of 2 variables and tennis_rankings had 1000 observations of 7 variables before the join. The joined data has 1000 observations of 8 variables because all players within tennis_players_time are found within tennis_rankings. I decided to use left join because I knew dataset 2 contained more players than dataset 1, and I wanted to keep the maximum number of observations possible after joining.
+
+```{R}
+library(tidyverse)
+tennis <- left_join(tennis_rankings,tennis_players_time,by=c("name"="player"))
+tennis %>% na.omit()
+```
+
+## 3. Wrangling
+
+##### The maximum value of points any player has ever obtained is 16950. The lowest values of every player grouped by country and best rank/best points are listed. The standard deviation of best points is 1658.434 and of best rank is 132.099. Only 6% of the observations under the `sec_added` variable have complete values, which may contribute to a lack of correlation (insufficient data). Arranging based on a descending `value` gives a list of players who have had the most points of all-time (Djokovic at the top). The 25th, 50th, and 75th quantiles of points are 104.75, 209.50, and 483.25 respectively. I created a new variable of points/sec_added and summarized the quantile for this column (50th percentile = -61.344). `n_distinct` was used to count all unique values in every column (500 names). The mean rank is 250.5, mean points is 509.748, and mean sec_added is -0.626 sec. All numeric variables' minimum and maximum are calculated using `summarize_if`. There is a 0.3167 correlation between `points` and `sec_added`, which is not a very strong correlation between the variables.
+
+```{R}
+tennis %>% filter(best == "bestPoints") %>% summarize(max(value)) 
+
+tennis %>% group_by(country_name, best) %>% summarize(min(value)) 
+
+tennis %>% group_by(best) %>% summarize(sd(value))
+
+tennis %>% select(8) %>% summarize_all(function(x) mean(!is.na(x)))
+
+tennis %>% arrange(desc(value))
+
+tennis %>% summarize(quantile(points))
+
+tennis %>% na.omit() %>% mutate(points_per_addedsec = points/sec_added) %>% summarize(quantile(points_per_addedsec))
+
+tennis %>% summarize_all(n_distinct)
+
+tennis %>% summarize_at(c("rank","points", "sec_added"), mean, na.rm=T)
+
+tennis %>% summarize_if(is.numeric, list(min=min,max=max), na.rm=T)
+
+tennis %>% na.omit() %>% summarize(cor(points, sec_added, use="pair"))
+```
+
+## 4. Visualizing
+    
+##### The correlation heatmap shows correlation values for all pairwise numeric variables. The highest correlation is between `points` and `values` at 0.54. `rank` and `points` have a correlation value of -0.53, which makes sense because the more points should mean a higher rank (lower number). `sec_added` and `points` (0.32) had about the same correlation as `sec_added` and `value` (0.27). `sec_added` and `rank` (-0.16) had about the same correlation as `rank` and `value` (-0.28). No two numeric variables had significant correlations.
+##### The barplot of sec_added vs. rank does not show a clear relationship between the two. The bars are colored by country and also does not show a clear trend between it and the two variables. `stat=summary` was used to plot the mean sec_added for each rank.
+##### Lastly, the scatterplot of rank vs. points does show a trend resembling exponential decay. This makes sense because the more points a player has, the higher their rank (lower number). From the graph, it seems that the top 7 players have a lot more points than the rest of the top 500, making the graph seem L-shaped. The plot was colored by country, but this seems to have no relationship with neither rank nor points.
+
+```{R}
+cormat <- tennis %>% select_if(is.numeric) %>% cor(use="pair")
+tidycor <- cormat %>% as.data.frame %>% rownames_to_column("var1") %>%
+pivot_longer(-1,names_to="var2",values_to="correlation")
+
+tidycor %>% ggplot(aes(var1,var2,fill=correlation)) + geom_tile() + scale_fill_gradient2(low="green",mid="white",high="blue") + geom_text(aes(label=round(correlation,2)),color = "black", size = 4) + theme(axis.text.x = element_text(angle = 90, hjust=1)) + coord_fixed() + ggtitle("Correlation Heatmap") + xlab("var1") + ylab("var2")
+
+tennis %>% na.omit %>% ggplot(aes(x=rank, y=sec_added,color=country_id)) + geom_bar(stat="summary", fun=mean) + ggtitle("Seconds added vs. Rank") + xlab("Rank") + ylab("Seconds added") + coord_fixed(8) + theme_light() + theme(legend.position="none") 
+
+ggplot(data=tennis,aes(x=points,y=rank,color=country_name)) + geom_point(size=4) + ggtitle("Rank vs. Points") + xlab("Points") + ylab("Rank") + coord_fixed(10) + theme_minimal() + theme(legend.position="none") + scale_y_continuous(breaks=c(0,50,100,150,200,250,300,350,400,450))
+```
+
+## 5. Dimensionality Reduction
+
+##### After performing PAM clustering on `rank`, `points`, and `sec_added`, 4 clusters was the optimal number of clusters to minimize within-cluster distance and maximize between-cluster distance. I checked this by finding a `k` with the highest silhouette width of 0.47. However, the structure is weak and could be artificial. Cluster 1 only contains 2 points, and from the graph, these points do not look separated from cluster 3.
+
+```{R}
+# Need to rejoin dataset using original tennis_rankings data so there are no duplicate rows.
+tennis_rankings <- read_excel("tennis_rankings.xlsx")
+tennis <- left_join(tennis_rankings,tennis_players_time,by=c("name"="player"))
+
+# Distance
+tennis %>% column_to_rownames("name") %>% select(rank, points, sec_added) %>% na.omit %>% dist %>% as.matrix %>% head
+
+# PAM Cluster
+library(cluster)
+clust_dat <- tennis %>% na.omit %>% select(rank,points,sec_added)
+set.seed(348)
+pam1 <- clust_dat %>% scale %>% pam(k=4)
+pam1
+pamclust <- clust_dat %>% mutate(cluster=as.factor(pam1$clustering))
+pamclust %>% ggplot(aes(x=rank,y=sec_added,shape=cluster,z=sec_added)) + geom_point()
+
+pam1$silinfo$avg.width
+plot(pam1,which=2)
+```
