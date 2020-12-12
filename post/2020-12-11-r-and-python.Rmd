@@ -1,0 +1,28 @@
+---
+title: Reticulate
+author: ''
+date: '2020-12-11'
+slug: r-and-python
+categories: []
+tags: []
+description: ''
+---
+![](/post/2020-12-11-r-and-python_files/python.png)
+
+For someone like me with little experience in computer coding, R was an easy program to transition into for manipulating, visualizing, and analyzing data. However, when Dr. Woodward started teaching Python, it was a foreign language to me, full of news things I had yet to learn. Why couldn't you simply have a file "copy to" a different location? Instead, the file has to be saved, then reuploaded in the desired location (so unnecessarily complicated). Why does index 2 mean position 1? What's the purpose of index 0? Despite my bias, many people out there still love Python (for reasons I don't quite understand). So here's a way for them to use it in conjunction with the fabulous R!
+```{R}
+library(reticulate)
+
+library(datasets)
+quakes <- quakes
+```
+
+Let's retrieve the dataset from R using Python.
+
+```{python}
+print(r.quakes.head())
+```
+
+```{R}
+
+```
