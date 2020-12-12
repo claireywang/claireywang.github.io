@@ -21,8 +21,12 @@ Let's retrieve the dataset from R using Python.
 
 ```{python}
 print(r.quakes.head())
+r.quakes.shape
+
+import numpy as np
+print(np.max(r.quakes.mag))
 ```
 
-```{R}
+Amazing! Now you can use R datasets and create beautiful ggplots while still being able to use Python functions.
 
-```
+Enjoy typing:)
